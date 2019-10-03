@@ -4,6 +4,7 @@ AWS.config.update({region: 'us-east-1'});
 var secretsManager = new AWS.SecretsManager({apiVersion: '2017-10-17'});
 const Alpaca = require('@alpacahq/alpaca-trade-api');
 var alpaca;
+var headers;
 
 var init = async() => {
   var secretData = await secretsManager.getSecretValue({SecretId: "AlpacaAPIKeys"}).promise(); 
@@ -19,42 +20,8 @@ var init = async() => {
   }
 }
 
-module.exports.connect = async () => {
+module.exports.trade = async () => {
     await init();
-    const client = alpaca.websocket
-    client.onConnect(async function() {
-        console.log("Connected to trading websocket");
-        //client.subscribe(['trade_updates', 'account_updates']);
-
-        await threeAndFourBarPlay.execute(alpaca);
-
-        setTimeout(() => {
-        client.disconnect();
-        }, 10 * 1000)
-    })
-    client.onDisconnect(() => {
-        console.log("Disconnected")
-    })
-    client.onStateChange(newState => {
-        console.log(`State changed to ${newState}`)
-    })
-    client.onOrderUpdate(data => {
-        console.log(`Order updates: ${JSON.stringify(data)}`)
-    })
-    client.onAccountUpdate(data => {
-        console.log(`Account updates: ${JSON.stringify(data)}`)
-    })
-    client.onStockTrades(function(subject, data) {
-        console.log(`Stock trades: ${subject}, ${data}`)
-    })
-    client.onStockQuotes(function(subject, data) {
-        console.log(`Stock quotes: ${subject}, ${data}`)
-    })
-    client.onStockAggSec(function(subject, data) {
-        console.log(`Stock agg sec: ${subject}, ${data}`)
-    })
-    client.onStockAggMin(function(subject, data) {
-        console.log(`Stock agg min: ${subject}, ${data}`)
-    })
-    client.connect();
+    await threeAndFourBarPlay.execute(alpaca);
+    
 }
