@@ -5,7 +5,8 @@
   "main": "main.js",
   "scripts": {
     "tradeSocket": "node -e 'require(\"./main.js\").trade()'",
-    "tradeAPI": ""
+    "tradeAPI": "",
+    "test": "node -e 'require(\"./main.js\").test()'"
   },
   "keywords": [
     "Trading",
@@ -18,6 +19,7 @@
   "dependencies": {
     "@alpacahq/alpaca-trade-api": "^1.0.3",
     "aws-sdk": "^2.504.0",
+    "lodash": "^4.17.15",
     "request": "^2.88.0",
     "request-promise-native": "^1.0.7"
   }

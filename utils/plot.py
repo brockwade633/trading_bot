@@ -86,6 +86,7 @@ def renderPlot(timestamp):
     global plt
     dateObj = datetime.datetime.fromtimestamp(timestamp)
     plt.title("Bars on " + str(dateObj.month) + "/" + str(dateObj.day) + "/" + str(dateObj.year))
+    plt.savefig(str(dateObj.month) + str(dateObj.day) + str(dateObj.year) + '_plot.pdf', bbox_inches='tight')
     plt.show()
 
 def formatTime(date):
