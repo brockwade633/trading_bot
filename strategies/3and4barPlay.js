@@ -29,14 +29,21 @@ module.exports.testing = async (alpacaClient) => {
 
   client.onStockAggMin(async function(subject, data) {
     
-    // Format incoming data
-    var newBar = data[0];  // data might get sent in [] like it comes through in the terminal
+    // Format incoming data?
+    
+    console.log("New web socket data: ", data);
+
+    console.log("");
+    var currDate = new Date();
+    console.log("Current Time: ", currDate.getHours() + ":" + currDate.getMinutes());
+    console.log("");
 
     // Check first if there is any dead time elapsed between incoming data and last received, longer than a minute. 
     // If so, hydrate the queue with last received data for the duration of dead time.
+    
 
     // Push on to the front of bars, and pop off the last item 
-    bars.unshift(newBar);
+    bars.unshift(data);
     bars.pop();
 
     console.log("Current Bars: ", bars);
@@ -55,22 +62,28 @@ module.exports.testing = async (alpacaClient) => {
 
     // act appropriately according to above checks
     if(threeBPOneMin){
+      console.log("THREE BAR PLAY!");
       // Buy Stock
       
       // Save plot of buy entry scenario as an image
       const { stdout, stderr } = await exec(`python ~/projects/trading_bot/utils/plot.py ${formatForPlot(oneMinAgg)}`);
+      client.disconnect();
     }
     else if(threeBPThreeMin){
+      console.log("THREE BAR PLAY!");
       // Buy Stock
       
       // Save plot of buy entry scenario as an image
       const { stdout, stderr } = await exec(`python ~/projects/trading_bot/utils/plot.py ${formatForPlot(threeMinAgg)}`);
+      client.disconnect();
     }
     else if(threeBPFiveMin){
+      console.log("THREE BAR PLAY!");
       // Buy Stock
       
       // Save plot of buy entry scenario as an image
       const { stdout, stderr } = await exec(`python ~/projects/trading_bot/utils/plot.py ${formatForPlot(fiveMinAgg)}`);
+      client.disconnect();
     }
     else{
       // nothing
