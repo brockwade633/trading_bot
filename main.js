@@ -38,7 +38,6 @@ var initLive = async() => {
 module.exports.trade = async () => {
     await initLive();
     await threeAndFourBarPlay.testing(alpaca);
-    
 }
 
 module.exports.test = async () => {
