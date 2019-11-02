@@ -4,9 +4,11 @@
   "description": "Automated algorithmic trading bot",
   "main": "main.js",
   "scripts": {
-    "tradeSocket": "node -e 'require(\"./main.js\").trade()'",
+    "tradeSocketPaper": "node -e 'require(\"./main.js\").tradePaper()'",
+    "tradeSocketLive": "node -e 'require(\"./main.js\").tradeLive()'",
     "tradeAPI": "",
-    "test": "node -e 'require(\"./main.js\").test()'"
+    "test": "node -e 'require(\"./main.js\").test()'",
+    "testOutBoundConnect": "curl https://www.google.com && echo this is a test message"
   },
   "keywords": [
     "Trading",

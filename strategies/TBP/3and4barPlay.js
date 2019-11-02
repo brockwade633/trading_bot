@@ -3,7 +3,7 @@ const exec = util.promisify(require('child_process').exec);
 var _ = require('lodash');
 
 
-module.exports.testing = async (alpacaClient) => {
+module.exports.execute = async (alpacaClient) => {
 
   // Initialize relevant vars
 
