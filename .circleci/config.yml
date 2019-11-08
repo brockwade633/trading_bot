@@ -1,0 +1,62 @@
+---
+# Javascript Node CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-javascript/ for more details
+#
+version: 2
+jobs:
+  deploy_strategy_cfn:
+    docker:
+      # specify the version you desire here
+      - image: python:3.7-stretch
+
+      # Specify service dependencies here if necessary
+      # CircleCI maintains a library of pre-built images
+      # documented at https://circleci.com/docs/2.0/circleci-images/
+      # - image: circleci/mongo:3.4.4
+
+    working_directory: ~/strategies/TBP/
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      #- restore_cache:
+      #    keys:
+      #      - v1-dependencies-{{ checksum "package.json" }}
+            # fallback to using the latest cache if no exact match is found
+      #      - v1-dependencies-
+
+      - run:
+          name: List Contents
+          command: ls -la
+      - run:
+          name: Install awscli
+          command: pip install awscli
+      # Possibly replace the following tasks with scripts in package json
+      #- run:
+      #    name: Build container
+      #    command:
+      #- run:
+      #    name: Tag container
+      #    command:
+      #- run:
+      #    name: Push container
+      #    command:
+      #- run:
+      #    name:  Deploy Service Stack
+      #    command:
+
+      #- save_cache:
+      #    paths:
+      #      - node_modules
+      #    key: v1-dependencies-{{ checksum "package.json" }}
+
+workflows:
+  version: 2
+  deploy_ecs_service_stack:
+    jobs:
+      - deploy_strategy_cfn:
+          filters:
+            branches:
+              only: master
+      
