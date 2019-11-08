@@ -4,7 +4,6 @@ AWS.config.update({region: 'us-east-1'});
 var secretsManager = new AWS.SecretsManager({apiVersion: '2017-10-17'});
 const Alpaca = require('@alpacahq/alpaca-trade-api');
 var headers;
-var test = require('./test');
 
 var initPaper = async() => {
     var secretData = await secretsManager.getSecretValue({SecretId: "AlpacaAPIKeys"}).promise(); 

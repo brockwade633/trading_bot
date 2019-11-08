@@ -1,6 +1,7 @@
 const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 var _ = require('lodash');
+const MILLI = 1000;
 
 
 module.exports.execute = async (alpacaClient) => {
@@ -40,11 +41,8 @@ module.exports.execute = async (alpacaClient) => {
 
     // Check first if there is any dead time elapsed between incoming data and last received, longer than a minute. 
     // If so, hydrate the queue with last received data for the duration of dead time.
-    
-
-    // Push on to the front of bars, and pop off the last item 
-    bars.unshift(data);
-    bars.pop();
+    // If not, just push on the new minute's data and pop off the oldest bar's data.
+    bars = incrementBars(bars, data);
 
     console.log("Current Bars: ", bars);
 
@@ -99,7 +97,7 @@ module.exports.execute = async (alpacaClient) => {
   });
 }
 
-var is3BarPlay = async(bars) => {
+var is3BarPlay = (bars) => {
 
   if(!checkBars(bars)){
     return false;
@@ -156,9 +154,24 @@ var is3BarPlay = async(bars) => {
   }
 }
 
+module.exports.is3BarPlay = is3BarPlay;
+
 var is4BarPlay = async(bars) => {
 
 }
+
+var incrementBars = (currBars, newBar) => {
+  var millisSinceLastData = newBar["s"] - currBars[0]["e"];
+  var minutesSinceLastData = (millisSinceLastData > 60 * MILLI) ? millisSinceLastData / (60 * MILLI) : 1;
+  console.log("minutes since last data: ", minutesSinceLastData);
+  for (i = 0; i < minutesSinceLastData; i++){
+    currBars.unshift(newBar);
+    currBars.pop();
+  }
+  return currBars;
+}
+
+module.exports.incrementBars = incrementBars;
 
 var formatForPlot = (agg) => {
   var dataTuple = [];
