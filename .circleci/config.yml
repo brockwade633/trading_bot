@@ -14,14 +14,20 @@ jobs:
           name: List Contents
           command: ls -la
       - run:
+          name: Set Debian Env Variable
+          command: export DEBIAN_FRONTEND=noninteractive
+      - run:
+          name: Setup Package Manager
+          command: apt-get update -y && apt-get install -y apt-utils
+      - run:
           name: Install Python
-          command: apt-get update && apt-get install -y python3
+          command: apt-get install -y python3-pip
       - run:
           name: Check pip
-          command: easy_install pip
+          command: pip3 --version
       - run:
           name: Install awscli
-          command: pip install awscli
+          command: pip3 install awscli
       - run:
           name: Hydrate Script Dependencies
           command: npm install
