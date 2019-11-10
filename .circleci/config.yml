@@ -42,7 +42,7 @@ jobs:
           command: apt-get install docker-ce -y
       - run:
           name: start docker
-          command: service docker start
+          command: sudo service docker start
       - run:
           name: Clean previous image
           command: npm run cleanPreviousImage
