@@ -1,30 +1,17 @@
 ---
-# Javascript Node CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-javascript/ for more details
-#
 version: 2
 jobs:
   push_image:
     docker:
-      - image: node:10
+      - image: 503921593645.dkr.ecr.us-west-2.amazonaws.com/utility:buildImage
+        aws_auth:
+          aws_access_key_id: $AWS_ACCESS_KEY_ID
+          aws_secret_access_key: $AWS_SECRET_ACCESS_KEY
     steps:
       - checkout
       - run:
           name: List Contents
           command: ls -la
-      - run:
-          name: Set Debian Env Variable
-          command: export DEBIAN_FRONTEND=noninteractive
-      - run:
-          name: Setup Package Manager for Python Install
-          command: apt-get update -y && apt-get install -y apt-utils
-      - run:
-          name: Install Python
-          command: apt-get install -y python3-pip
-      - run:
-          name: Install awscli
-          command: pip3 install awscli
       - run:
           name: Hydrate Script Dependencies
           command: npm install
@@ -37,24 +24,15 @@ jobs:
 
   deploy_strategy_cfn:
     docker:
-      - image: node:10
+      - image: 503921593645.dkr.ecr.us-west-2.amazonaws.com/utility:buildImage
+        aws_auth:
+          aws_access_key_id: $AWS_ACCESS_KEY_ID
+          aws_secret_access_key: $AWS_SECRET_ACCESS_KEY
     steps:
       - checkout
       - run:
           name: List Contents
           command: ls -la
-      - run:
-          name: Set Debian Env Variable
-          command: export DEBIAN_FRONTEND=noninteractive
-      - run:
-          name: Setup Package Manager for Python Install
-          command: apt-get update -y && apt-get install -y apt-utils
-      - run:
-          name: Install Python
-          command: apt-get install -y python3-pip
-      - run:
-          name: Install awscli
-          command: pip3 install awscli
       - run:
           name: Hydrate Script Dependencies
           command: npm install
