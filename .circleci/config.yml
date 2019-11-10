@@ -15,7 +15,7 @@ jobs:
           command: ls -la
       - run:
           name: Install Python
-          command: apt-get update && apt-get install -y python3
+          command: sudo apt-get update && sudo apt-get install -y python3
       - run:
           name: Install awscli
           command: pip install awscli
