@@ -20,10 +20,10 @@ jobs:
           command: npm run cleanPreviousImage tbp
       - run:
           name: docker test
-          command: service docker stop
+          command: sudo service docker stop
       - run:
           name: more
-          command: service docker start
+          command: sudo service docker start
       - run:
           name: Build, Tag, and Push Image to ECR
           command: npm run buildTagPushImage
