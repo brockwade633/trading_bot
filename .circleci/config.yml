@@ -15,7 +15,7 @@ jobs:
           command: ls -la
       - run:
           name: Install Python
-          command: apt-get install -y python3-pip
+          command: apt-get install -y python3
       - run:
           name: Install awscli
           command: pip3 install awscli
@@ -39,7 +39,7 @@ jobs:
           command: ls -la
       - run:
           name: Install Python
-          command: apt-get install -y python3-pip
+          command: apt-get install -y python3
       - run:
           name: Install awscli
           command: pip3 install awscli
