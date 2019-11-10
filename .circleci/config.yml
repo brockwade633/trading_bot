@@ -18,7 +18,7 @@ jobs:
           command: apt-get install -y python3
       - run:
           name: Install awscli
-          command: pip3 install awscli
+          command: pip install awscli
       - run:
           name: Hydrate Script Dependencies
           command: npm install
@@ -42,7 +42,7 @@ jobs:
           command: apt-get install -y python3
       - run:
           name: Install awscli
-          command: pip3 install awscli
+          command: pip install awscli
       - run:
           name: Hydrate Script Dependencies
           command: npm install
@@ -59,6 +59,8 @@ workflows:
             branches:
               only: master
       - deploy_strategy_cfn:
+          requires:
+            - push_image
           filters:
             branches:
               only: master
