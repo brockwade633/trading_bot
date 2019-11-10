@@ -5,56 +5,59 @@
 #
 version: 2
 jobs:
-  deploy_strategy_cfn:
+  push_image:
     docker:
-      # specify the version you desire here
-      - image: python:3.7-stretch
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
-
-    working_directory: ~/strategies/TBP/
+      - image: node:10
     steps:
       - checkout
-
-      # Download and cache dependencies
-      #- restore_cache:
-      #    keys:
-      #      - v1-dependencies-{{ checksum "package.json" }}
-            # fallback to using the latest cache if no exact match is found
-      #      - v1-dependencies-
-
       - run:
           name: List Contents
           command: ls -la
       - run:
+          name: Install Python
+          command: apt-get install -y python3-pip
+      - run:
           name: Install awscli
-          command: pip install awscli
-      # Possibly replace the following tasks with scripts in package json
-      #- run:
-      #    name: Build container
-      #    command:
-      #- run:
-      #    name: Tag container
-      #    command:
-      #- run:
-      #    name: Push container
-      #    command:
-      #- run:
-      #    name:  Deploy Service Stack
-      #    command:
+          command: pip3 install awscli
+      - run:
+          name: Hydrate Script Dependencies
+          command: npm install
+      - run:
+          name: Clean previous image
+          command: npm run cleanPreviousImage
+      - run:
+          name: Build, Tag, and Push Image to ECR
+          command: npm run buildTagPushImage
 
-      #- save_cache:
-      #    paths:
-      #      - node_modules
-      #    key: v1-dependencies-{{ checksum "package.json" }}
+  deploy_strategy_cfn:
+    docker:
+      - image: node:10
+    steps:
+      - checkout
+      - run:
+          name: List Contents
+          command: ls -la
+      - run:
+          name: Install Python
+          command: apt-get install -y python3-pip
+      - run:
+          name: Install awscli
+          command: pip3 install awscli
+      - run:
+          name: Hydrate Script Dependencies
+          command: npm install
+      - run:
+          name:  Deploy Service Stack
+          command: npm run deployTBPService
 
 workflows:
   version: 2
   deploy_ecs_service_stack:
     jobs:
+      - push_image:
+          filters:
+            branches:
+              only: master
       - deploy_strategy_cfn:
           filters:
             branches:
