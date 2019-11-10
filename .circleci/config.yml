@@ -7,7 +7,7 @@ version: 2
 jobs:
   push_image:
     docker:
-      - image: node:10
+      - image: node:8.16.2-stretch
     steps:
       - checkout
       - run:
