@@ -4,9 +4,17 @@
   "description": "Automated algorithmic trading bot",
   "main": "main.js",
   "scripts": {
+    "": "",
+    "cleanPreviousImage": "node -e 'require(\"./utils/ecr_handler.js\").cleanPrevImage()'",
+    "fetchECRAuthToken": "$(aws ecr get-login --no-include-email --region us-west-2)",
+    "buildImage": "docker build -t tradingcluster:tbp -f ./strategies/TBP/Dockerfile .",
+    "tagImage": "docker tag tradingcluster:tbp ***REMOVED***",
+    "pushImage": "docker push ***REMOVED***",
+    "buildTagPushImage": "npm run fetchECRAuthToken && npm run buildImage && npm run tagImage && npm run pushImage",
+    "cleanPreviousStack": "node -e 'require(\"./utils/cfn_handler.js\").cleanPrevStack()'",
+    "deployTBPService": "aws cloudformation deploy --template-file ./strategies/TBP/tbp_service_cfn.yaml --stack-name TBPService --capabilities CAPABILITY_IAM --region us-west-2",
     "tradeSocketPaper": "node -e 'require(\"./main.js\").tradePaper()'",
     "tradeSocketLive": "node -e 'require(\"./main.js\").tradeLive()'",
-    "tradeAPI": "",
     "test": "node -e 'require(\"./main.js\").test()'",
     "testOutBoundConnect": "curl https://www.google.com && echo this is a test message"
   },
@@ -17,6 +25,10 @@
     "API"
   ],
   "author": "Brock Wade",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/brockwade633/trading_bot"
+  },
   "license": "ISC",
   "dependencies": {
     "@alpacahq/alpaca-trade-api": "^1.0.3",

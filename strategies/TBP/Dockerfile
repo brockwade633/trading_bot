@@ -21,7 +21,10 @@ RUN npm -v
 RUN apt-get install curl -y
 RUN curl --version
 
+COPY strategies/TBP ./strategies/TBP
 COPY package*.json ./
+
+RUN ls -la
 
 RUN npm install
 
