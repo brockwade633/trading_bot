@@ -23,7 +23,7 @@ jobs:
           command: service docker stop
       - run:
           name: more
-          command: bash -c "echo \"limit nofile 262144 262144\" >> /etc/init/docker.conf" && service docker start
+          command: service docker start
       - run:
           name: Build, Tag, and Push Image to ECR
           command: npm run buildTagPushImage

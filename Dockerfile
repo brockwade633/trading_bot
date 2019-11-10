@@ -23,3 +23,7 @@ RUN apt-get update -y
 
 # Install Docker
 RUN apt-get install docker-ce -y
+
+# Add setting
+RUN echo "ulimit -n 8192" >> /etc/profile
+RUN . /etc/profile
