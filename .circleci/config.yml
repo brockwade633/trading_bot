@@ -7,7 +7,7 @@ version: 2
 jobs:
   push_image:
     docker:
-      - image: node:8.16.2-stretch
+      - image: ubuntu:18.04
     steps:
       - checkout
       - run:
