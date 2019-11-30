@@ -1,8 +1,4 @@
 ---
-# Javascript Node CircleCI 2.0 configuration file
-#
-# Check https://circleci.com/docs/2.0/language-javascript/ for more details
-#
 version: 2.1
 orbs:
   aws-ecr: circleci/aws-ecr@6.5.0
@@ -15,43 +11,12 @@ jobs:
       - run:
           name: List Contents
           command: ls -la
-      # - run:
-      #     name: Set Debian Env Variable
-      #     command: export DEBIAN_FRONTEND=noninteractive
-      # - run:
-      #     name: Setup Package Manager for Python Install
-      #     command: apt-get update -y && apt-get install -y apt-utils
-      # - run:
-      #     name: Install Python
-      #     command: apt-get install -y python3-pip
-      # - run:
-      #     name: Install awscli
-      #     command: pip3 install awscli
       - run:
           name: Hydrate Script Dependencies
           command: npm install
-      # - run:
-      #     name: Install Prerequisite Packages for Docker
-      #     command: apt-get upgrade -y && apt-get install  curl apt-transport-https ca-certificates software-properties-common -y
-      # - run:
-      #     name: Add Docker repos
-      #     command: curl -fsSL https://download.docker.com/linux/debian/gpg | apt-key add -
-      # - run:
-      #     name: Add Docker repos 2
-      #     command: add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/debian $(lsb_release -cs) stable" && apt-get update -y
-      # - run:
-      #     name: Install Docker
-      #     command: apt-get install docker-ce -y
-      # - run:
-      #     name: start docker
-      #     command: sudo service docker start
-
       - run:
           name: Clean previous image
           command: npm run cleanPreviousImage
-      # - run:
-      #     name: Build, Tag, and Push Image to ECR
-      #     command: npm run buildTagPushImage
 
   deploy_strategy_cfn:
     docker:

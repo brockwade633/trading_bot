@@ -85,7 +85,7 @@ def renderPlot(timestamp):
     candlestick_ohlc(ax, tupleData, width=timeFrame-(timeFrame/12), colorup='g', colordown='r')
     global plt
     dateObj = datetime.datetime.fromtimestamp(timestamp)
-    plt.title("Bars on " + str(dateObj.month) + "/" + str(dateObj.day) + "/" + str(dateObj.year))
+    plt.title("Potential TBP entry on " + str(dateObj.month) + "/" + str(dateObj.day) + "/" + str(dateObj.year))
     plt.savefig(str(dateObj.month) + str(dateObj.day) + str(dateObj.year) + '_plot.pdf', bbox_inches='tight')
 
 def formatTime(date):

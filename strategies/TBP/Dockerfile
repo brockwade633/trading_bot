@@ -23,11 +23,11 @@ RUN curl --version
 
 COPY strategies/TBP ./strategies/TBP
 COPY package*.json ./
-
-RUN ls -la
+COPY utils ./utils
+COPY main.js ./
 
 RUN npm install
 
-COPY . .
+RUN ls -la 
 
-CMD ["npm", "run", "testOutBoundConnect"]
+CMD ["npm", "run", "tradeSocketPaper"]
