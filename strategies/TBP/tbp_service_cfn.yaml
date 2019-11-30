@@ -1,21 +1,22 @@
+---
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Deploy a service to the Fargate trading cluster that runs the Three (and Four) Bar Play Strategy
 Parameters:
   StackName:
     Type: String
-    Default: TBPService
+    Default: TBP
     Description: The name of the service stack
   InfraStackName:
     Type: String
     Default: TCInfra
     Description: The name of the parent Fargate infra stack.
-  ServiceName:
+  StrategyName:
     Type: String
     Default: threeBarPlay
     Description: Name for the service
   ImageUrl:
     Type: String
-    Default: 503921593645.dkr.ecr.us-west-2.amazonaws.com/tradingcluster:trialImage
+    Default: 503921593645.dkr.ecr.us-west-2.amazonaws.com/tradingcluster:tbp
     Description: The url of the docker image that contains trading code
   ContainerCpu:
     Type: String
@@ -24,7 +25,7 @@ Parameters:
   ContainerMemory:
     Type: String
     Default: "2048"
-    Description: How much memory in megabytes to give the container
+    Description: How much memory in megabytes to give the container 
 
 Resources:
 
@@ -32,7 +33,7 @@ Resources:
   CloudWatchLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Ref 'ServiceName'
+      LogGroupName: !Ref 'StrategyName'
       RetentionInDays: 7
 
   # The task definition. Describes the containers within and their resource requirements.
@@ -40,7 +41,7 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     DependsOn: CloudWatchLogsGroup
     Properties:
-      Family: !Ref 'ServiceName'
+      Family: !Ref 'StrategyName'
       Cpu: !Ref 'ContainerCpu'
       Memory: !Ref 'ContainerMemory'
       NetworkMode: awsvpc
@@ -55,39 +56,157 @@ Resources:
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref 'ServiceName'
+              awslogs-group: !Ref 'StrategyName'
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: awslogs-fargatecontainer
-  
-  # The service. A resource that allows multiple running copies of a type of task, gathering up their logs 
-  # and metrics, and monitoring the number of running tasks and replacing any that have crashed.
-  Service:
-    Type: AWS::ECS::Service
+
+  # State machine that executes Task Definition
+  StateMachine:
+    Type: 'AWS::StepFunctions::StateMachine'
     Properties:
-      ServiceName: !Ref 'ServiceName'
-      Cluster:
-        Fn::ImportValue:
-          !Join [':', [!Ref 'InfraStackName', 'ClusterName']]
-      LaunchType: FARGATE
-      DeploymentConfiguration:
-        MaximumPercent: 200
-        MinimumHealthyPercent: 100
-      DesiredCount: 1
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          Subnets:
-            - Fn::ImportValue:
-                !Join [':', [!Ref 'InfraStackName', 'PrivateSubnet']]
-      TaskDefinition: !Ref 'TaskDefinition'
+      DefinitionString: !Sub
+      - |
+        {
+          "Version": "1.0",
+          "Comment": "Run Fargate Task",
+          "TimeoutSeconds": 43200,
+          "StartAt": "RunTask",
+          "States": {
+            "RunTask": {
+              "Type": "Task",
+              "Resource": "arn:aws:states:::ecs:runTask.sync",
+              "Parameters": {
+                "LaunchType": "FARGATE",
+                "Cluster": "${Cluster}",
+                "TaskDefinition": "${TaskDefinition}",
+                "NetworkConfiguration": {
+                  "AwsvpcConfiguration": {
+                    "Subnets": ["${PrivateSubnet}"],
+                    "AssignPublicIp": "DISABLED"
+                  }
+                }
+              },
+              "Retry": [
+                {
+                  "ErrorEquals": [
+                    "States.TaskFailed"
+                  ],
+                  "IntervalSeconds": 1,
+                  "MaxAttempts": 3,
+                  "BackoffRate": 2
+                }
+              ],
+              "End": true
+            }
+          }
+        }
+      - Cluster: 
+          Fn::ImportValue:
+            !Join [':', [!Ref 'InfraStackName', 'ClusterNameArn']]
+        PrivateSubnet:
+          Fn::ImportValue: 
+            !Join [':', [!Ref 'InfraStackName', 'PrivateSubnet']]
+        TaskDefinition: !Ref 'TaskDefinition'
+      RoleArn: !GetAtt 'StateMachineRole.Arn'
+
+  # State Machine IAM Role
+  StateMachineRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+            - Effect: Allow
+              Principal:
+                Service: 'states.amazonaws.com'
+              Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: StateMachine
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'iam:PassRole'
+                Resource:
+                  Fn::ImportValue:
+                    !Join [':', [!Ref 'InfraStackName', 'ECSTaskExecutionRoleArn']]
+              - Effect: Allow
+                Action: 'ecs:RunTask'
+                Resource: !Ref TaskDefinition
+                Condition:
+                  ArnEquals:
+                    'ecs:cluster': 
+                      Fn::ImportValue:
+                        !Join [':', [!Ref 'InfraStackName', 'ClusterNameArn']]
+              - Effect: Allow
+                Action:
+                  - 'ecs:StopTask'
+                  - 'ecs:DescribeTasks'
+                Resource: '*'
+                Condition:
+                  ArnEquals:
+                    'ecs:cluster': 
+                      Fn::ImportValue:
+                        !Join [':', [!Ref 'InfraStackName', 'ClusterNameArn']]
+              - Effect: Allow
+                Action:
+                  - 'events:PutTargets'
+                  - 'events:PutRule'
+                  - 'events:DescribeRule'
+                Resource: !Sub 'arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/StepFunctionsGetEventsForECSTaskRule'
+
+  # Rule that tells the State Machine when to execute on a cron schedule
+  Rule:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      ScheduleExpression: 'cron(30 13 ? * MON-FRI *)'
+      State: ENABLED
+      Targets:
+      - Arn: !Ref StateMachine
+        Id: statemachine
+        RoleArn: !GetAtt 'RuleRole.Arn'
+
+  # Rule IAM Role
+  RuleRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'events.amazonaws.com'
+          Action: 'sts:AssumeRole'
+      Policies:
+      - PolicyName: EventRulePolicy
+        PolicyDocument:
+          Statement:
+          - Effect: Allow
+            Action: 'states:StartExecution'
+            Resource: !Ref StateMachine
 
 Outputs:
   TaskDefinition:
-    Description: The Fargate Service's Task Definition
+    Description: The Fargate Cluster's Task Definition
     Value: !Ref 'TaskDefinition'
     Export:
       Name: !Sub ${StackName}:TaskDefinition
-  Service:
-    Description: The Fargate Service
-    Value: !Ref 'Service'
+  StateMachine:
+    Description: The State Machine that manages the Fargate Task
+    Value: !Ref 'StateMachine'
     Export:
-      Name: !Sub ${StackName}:Service
+      Name: !Sub ${StackName}:StateMachine
+  StateMachineRole:
+    Description: The State Machine IAM Role 
+    Value: !Ref 'StateMachineRole'
+    Export:
+      Name: !Sub ${StackName}:StateMachineRole
+  Rule:
+    Description: The Rule that dictates when State Machine tasks are executed
+    Value: !Ref 'Rule'
+    Export:
+      Name: !Sub ${StackName}:Rule
+  RuleRole:
+    Description: The Rule IAM Role
+    Value: !Ref 'RuleRole'
+    Export:
+      Name: !Sub ${StackName}:RuleRole

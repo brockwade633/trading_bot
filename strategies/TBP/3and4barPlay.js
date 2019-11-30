@@ -2,6 +2,8 @@ const util = require('util');
 const exec = util.promisify(require('child_process').exec);
 var _ = require('lodash');
 const MILLI = 1000;
+var AWS = require('aws-sdk');
+var S3 = new AWS.S3({apiVersion: '2017-10-17'});
 
 
 module.exports.execute = async (alpacaClient) => {
@@ -64,7 +66,10 @@ module.exports.execute = async (alpacaClient) => {
       // Buy Stock
       
       // Save plot of buy entry scenario as an image
-      const { stdout, stderr } = await exec(`python ~/projects/trading_bot/utils/plot.py ${formatForPlot(oneMinAgg)}`);
+      const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(oneMinAgg)}`);
+
+      // Upload to s3
+      await uploadImage();
       client.disconnect();
     }
     else if(threeBPThreeMin){
@@ -72,7 +77,10 @@ module.exports.execute = async (alpacaClient) => {
       // Buy Stock
       
       // Save plot of buy entry scenario as an image
-      const { stdout, stderr } = await exec(`python ~/projects/trading_bot/utils/plot.py ${formatForPlot(threeMinAgg)}`);
+      const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(threeMinAgg)}`);
+
+      // Upload to s3
+      await uploadImage();
       client.disconnect();
     }
     else if(threeBPFiveMin){
@@ -80,7 +88,10 @@ module.exports.execute = async (alpacaClient) => {
       // Buy Stock
       
       // Save plot of buy entry scenario as an image
-      const { stdout, stderr } = await exec(`python ~/projects/trading_bot/utils/plot.py ${formatForPlot(fiveMinAgg)}`);
+      const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(fiveMinAgg)}`);
+
+      // Upload to s3
+      await uploadImage();
       client.disconnect();
     }
     else{
@@ -146,12 +157,7 @@ var is3BarPlay = (bars) => {
   // Does bar3 break highs of bar1 & bar2
   var isEntryBarHighest = entryBar["c"] > ignitingBar["c"] && entryBar["c"] > restingBar["o"];
 
-  if (isIgBarIgniting && isIgBarAboveAvg && isRestingBarDecreasing && isHeightRelEqual && isRestingBarinUpperIgBar && isEntryBarIncreasing && isEntryBarHighest){
-    return true;
-  }
-  else {
-    return false;
-  }
+  return (isIgBarIgniting && isIgBarAboveAvg && isRestingBarDecreasing && isHeightRelEqual && isRestingBarinUpperIgBar && isEntryBarIncreasing && isEntryBarHighest);
 }
 
 module.exports.is3BarPlay = is3BarPlay;
@@ -190,4 +196,16 @@ var checkBars = (bars) => {
     if(typeof bar != 'object') return false;
   }
   return true;
+}
+
+var uploadImage = async () => {
+  var now = new Date();
+  var fileName = String(now.getMonth() + 1) + String(now.getDate()) + String(now.getFullYear()) + "_plot.pdf";
+  var file = fs.readFileSync(fileName);
+  var params = {
+      Body: file,
+      Bucket: "tradingartifacts",
+      Key: `TBP/${fileName}.pdf`
+  }
+  await S3.putObject(params).promise();
 }
