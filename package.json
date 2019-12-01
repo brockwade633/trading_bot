@@ -12,7 +12,7 @@
     "pushImage": "docker push ***REMOVED***",
     "buildTagPushImage": "npm run fetchECRAuthToken && npm run buildImage && npm run tagImage && npm run pushImage",
     "cleanPreviousStack": "node -e 'require(\"./utils/cfn_handler.js\").cleanPrevStack()'",
-    "deployTBPService": "aws cloudformation deploy --template-file ./strategies/TBP/tbp_service_cfn.yaml --stack-name TBPService --capabilities CAPABILITY_IAM --region us-west-2",
+    "deployTBPService": "aws cloudformation deploy --template-file ./strategies/TBP/tbp_service_cfn.yaml --stack-name TBP --capabilities CAPABILITY_IAM --region us-west-2",
     "tradeSocketPaper": "node -e 'require(\"./main.js\").tradePaper()'",
     "tradeSocketLive": "node -e 'require(\"./main.js\").tradeLive()'",
     "test": "node -e 'require(\"./main.js\").test()'",
