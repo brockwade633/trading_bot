@@ -17,6 +17,9 @@ RUN nodejs -v
 RUN apt-get install npm -y
 RUN npm -v
 
+# Install python
+RUN apt-get install -y python3-pip
+
 # Install curl
 RUN apt-get install curl -y
 RUN curl --version
