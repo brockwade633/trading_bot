@@ -60,7 +60,7 @@ workflows:
           aws-access-key-id: AWS_ACCESS_KEY_ID
           aws-secret-access-key: AWS_SECRET_ACCESS_KEY
           create-repo: false
-          path: ./strategies/TBP/
+          dockerfile: Dockerfile-TBP
           region: AWS_REGION
           repo: tradingcluster
           tag: 'tbp'
