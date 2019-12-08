@@ -162,9 +162,9 @@ var is3BarPlay = (bars) => {
 
 module.exports.is3BarPlay = is3BarPlay;
 
-var is4BarPlay = async(bars) => {
+// var is4BarPlay = async(bars) => {
 
-}
+// }
 
 var incrementBars = (currBars, newBar) => {
   var millisSinceLastData = newBar["s"] - currBars[0]["e"];
