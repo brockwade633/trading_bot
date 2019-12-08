@@ -50,6 +50,9 @@ Resources:
       ExecutionRoleArn:
         Fn::ImportValue:
           !Join [':', [!Ref 'InfraStackName', 'ECSTaskExecutionRole']]
+      TaskRoleArn:
+        Fn::ImportValue:
+          !Join [':', [!Ref 'InfraStackName', 'ECSTaskExecutionRole']]
       ContainerDefinitions:
         - Name: TESTCONTAINER
           Image: !Ref 'ImageUrl'
