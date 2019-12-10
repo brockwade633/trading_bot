@@ -34,7 +34,7 @@ module.exports.execute = async (alpacaClient) => {
     
     // Format incoming data?
     
-    console.log("New web socket data: ", data);
+    console.log("New web socket data: ", data[0]);
 
     console.log("");
     var currDate = new Date();
@@ -44,7 +44,7 @@ module.exports.execute = async (alpacaClient) => {
     // Check first if there is any dead time elapsed between incoming data and last received, longer than a minute. 
     // If so, hydrate the queue with last received data for the duration of dead time.
     // If not, just push on the new minute's data and pop off the oldest bar's data.
-    bars = incrementBars(bars, data);
+    bars = incrementBars(bars, data[0]);
 
     console.log("Current Bars: ", bars);
 
