@@ -112,9 +112,12 @@ module.exports.execute = async (alpacaClient) => {
 var is3BarPlay = (bars) => {
 
   if(!checkBars(bars)){
+    console.log("");
+    console.log("bars are not filled up yet");
+    console.log("");
     return false;
   }
-
+  //console.log("TEST");
   var prevBarsTotal = 0;
   var prevBars = bars.slice(0, 6);
   for (var bar of prevBars) {
@@ -126,6 +129,8 @@ var is3BarPlay = (bars) => {
   var entryBar = bars[bars.length-1];
 
   // Potential igniting bar 
+  console.log("igniting bar: ", ignitingBar);
+  console.log("");
   var igBarLength = ignitingBar["c"] - ignitingBar["o"];
 
   // Is potential igniting bar trending up
