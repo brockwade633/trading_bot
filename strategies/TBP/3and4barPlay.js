@@ -109,61 +109,60 @@ module.exports.execute = async (alpacaClient) => {
   });
 }
 
-var is3BarPlay = (bars) => {
+var is3BarPlay = (data) => {
 
-  if(!checkBars(bars)){
-    console.log("");
-    console.log("bars are not filled up yet");
-    console.log("");
+  if(!checkBars(data)){
+    console.log("Bars are not filled up yet");
     return false;
   }
-  //console.log("TEST");
-  var prevBarsTotal = 0;
-  var prevBars = bars.slice(0, 6);
-  for (var bar of prevBars) {
-    prevBarsTotal = prevBarsTotal + Math.abs(bar["o"] - bar["c"]);
+  else{
+    var prevBarsTotal = 0;
+    var prevBars = data.slice(0, 6);
+    for (var bar of prevBars) {
+      prevBarsTotal = prevBarsTotal + Math.abs(bar["o"] - bar["c"]);
+    }
+    var avgPrevBars = prevBarsTotal / 5;
+    var ignitingBar = data[data.length-3];
+    var restingBar = data[data.length-2];
+    var entryBar = data[data.length-1];
+
+    // Potential igniting bar
+    console.log("Data: ", data); 
+    console.log("igniting bar: ", ignitingBar);
+    var igBarLength = ignitingBar["c"] - ignitingBar["o"];
+
+    // Is potential igniting bar trending up
+    var isIgBarIgniting = igBarLength > 0;
+
+    // Is potential igniting bar above average of previous 5 bars
+    var isIgBarAboveAvg = igBarLength > avgPrevBars;
+
+    // Potential narrow range resting bar
+    var restingBarLength = restingBar["o"] - restingBar["c"];
+
+    //Is potential narrow range bar trending down
+    var isRestingBarDecreasing = restingBarLength > 0;
+
+    // Are heights of igniting bar & resting bar relatively equal
+    var isHeightRelEqual = (Math.abs(ignitingBar["c"] - restingBar["o"]) / restingBarLength) < 0.25;
+    
+    // bar1 midway price
+    var igBarMidpoint = ignitingBar["c"] - (igBarLength / 2);
+
+    // Is bar2 in the upper 50% of bar1
+    var isRestingBarinUpperIgBar = restingBar["c"] > igBarMidpoint;
+
+    // bar3
+    var entryBarLength = entryBar["c"] - entryBar["o"];
+
+    // Is bar3 trending up
+    var isEntryBarIncreasing = entryBarLength > 0;
+
+    // Does bar3 break highs of bar1 & bar2
+    var isEntryBarHighest = entryBar["c"] > ignitingBar["c"] && entryBar["c"] > restingBar["o"];
+
+    return (isIgBarIgniting && isIgBarAboveAvg && isRestingBarDecreasing && isHeightRelEqual && isRestingBarinUpperIgBar && isEntryBarIncreasing && isEntryBarHighest);
   }
-  var avgPrevBars = prevBarsTotal / 5;
-  var ignitingBar = bars[bars.length-3];
-  var restingBar = bars[bars.length-2];
-  var entryBar = bars[bars.length-1];
-
-  // Potential igniting bar 
-  console.log("igniting bar: ", ignitingBar);
-  console.log("");
-  var igBarLength = ignitingBar["c"] - ignitingBar["o"];
-
-  // Is potential igniting bar trending up
-  var isIgBarIgniting = igBarLength > 0;
-
-  // Is potential igniting bar above average of previous 5 bars
-  var isIgBarAboveAvg = igBarLength > avgPrevBars;
-
-  // Potential narrow range resting bar
-  var restingBarLength = restingBar["o"] - restingBar["c"];
-
-  //Is potential narrow range bar trending down
-  var isRestingBarDecreasing = restingBarLength > 0;
-
-  // Are heights of igniting bar & resting bar relatively equal
-  var isHeightRelEqual = (Math.abs(ignitingBar["c"] - restingBar["o"]) / restingBarLength) < 0.25;
-  
-  // bar1 midway price
-  var igBarMidpoint = ignitingBar["c"] - (igBarLength / 2);
-
-  // Is bar2 in the upper 50% of bar1
-  var isRestingBarinUpperIgBar = restingBar["c"] > igBarMidpoint;
-
-  // bar3
-  var entryBarLength = entryBar["c"] - entryBar["o"];
-
-  // Is bar3 trending up
-  var isEntryBarIncreasing = entryBarLength > 0;
-
-  // Does bar3 break highs of bar1 & bar2
-  var isEntryBarHighest = entryBar["c"] > ignitingBar["c"] && entryBar["c"] > restingBar["o"];
-
-  return (isIgBarIgniting && isIgBarAboveAvg && isRestingBarDecreasing && isHeightRelEqual && isRestingBarinUpperIgBar && isEntryBarIncreasing && isEntryBarHighest);
 }
 
 module.exports.is3BarPlay = is3BarPlay;
