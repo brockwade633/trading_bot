@@ -28,11 +28,11 @@ def defineAxesAndData(barData):
     cushion = timeFrame*5
 
     # parse data for x and y axis specs and format candlestick data
-    for i in range(0, len(barData)):
-        if '.' in barData[i]:
-            ydata.append(float(barData[i]))
-        if '.' not in barData[i]:
+    for i in range(1, len(barData)):
+        if (i%5 == 0):
             xdata.append(int(barData[i]))
+        if (i%5 != 0):
+            ydata.append(float(barData[i]))
         if ((i+1)%5 == 0):
             global tupleData
             tupleData.append((int(barData[i-4]), float(barData[i-3]), float(barData[i-2]), float(barData[i-1]), float(barData[i])))
@@ -86,7 +86,7 @@ def renderPlot(timestamp):
     global plt
     dateObj = datetime.datetime.fromtimestamp(timestamp)
     plt.title("Potential TBP entry on " + str(dateObj.month) + "/" + str(dateObj.day) + "/" + str(dateObj.year))
-    plt.savefig(str(dateObj.month) + str(dateObj.day) + str(dateObj.year) + '_plot.pdf', bbox_inches='tight')
+    plt.savefig("strategies/TBP/" + str(dateObj.month) + str(dateObj.day) + str(dateObj.year) + '_plot.pdf', bbox_inches='tight')
 
 def formatTime(date):
     minute = ""
