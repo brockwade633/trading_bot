@@ -14,10 +14,9 @@
     "cleanPreviousStack": "node -e 'require(\"./utils/cfn_handler.js\").cleanPrevStack()'",
     "deployTBPService": "aws cloudformation deploy --template-file ./strategies/TBP/tbp_service_cfn.yaml --stack-name TBP --capabilities CAPABILITY_IAM --region us-west-2",
     "startLocalWS": "node -e 'require(\"./utils/localDev.js\").startWS()'",
-    "testMinuteAggs": "node --inspect-brk -e 'require(\"./utils/wsClient\").connect()'",
+    "testMinuteAggs": "node -e 'require(\"./utils/wsClient\").connect()'",
     "tradeTBPPaper": "export trade_env=Paper && node -e 'require(\"./strategies/TBP/3and4barPlay.js\").execute()'",
     "tradeTBPLive": "export trade_env=Live && node -e 'require(\"./strategies/TBP/3and4barPlay.js\").execute()'",
-    "test": "node -e 'require(\"./main.js\").test()'",
     "testOutBoundConnect": "curl https://www.google.com && echo this is a test message"
   },
   "keywords": [
