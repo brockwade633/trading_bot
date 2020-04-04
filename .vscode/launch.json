@@ -1,0 +1,21 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "node",
+        "request": "launch",
+        "name": "Debug Minute Aggregates",
+        "cwd": "${workspaceFolder}",
+        "runtimeExecutable": "npm",
+        "runtimeArgs": [
+            "run-script",
+            "testMinuteAggs"
+        ],
+        "env": {
+            "trade_env": "local"
+        },
+        "port": 9229,
+        "console": "internalConsole"
+      }
+    ]
+  }

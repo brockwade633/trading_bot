@@ -4,110 +4,133 @@ var _ = require('lodash');
 const MILLI = 1000;
 var AWS = require('aws-sdk');
 var S3 = new AWS.S3({apiVersion: '2017-10-17'});
+AWS.config.update({region: 'us-east-1'});
+var secretsManager = new AWS.SecretsManager({apiVersion: '2017-10-17'});
+const Alpaca = require('@alpacahq/alpaca-trade-api');
+const config = require('../../utils/alpacaConfig');
+var alpaca;
 
+// Initialize a Queue 36 long
+var bars = new Array(36).fill(0);
 
-module.exports.execute = async (alpacaClient) => {
+var init = async (isPaper) => {
+  var secretData = await secretsManager.getSecretValue({SecretId: "AlpacaAPIKeys"}).promise(); 
+  var secrets = JSON.parse(secretData.SecretString);
+  var key_id = (isPaper) ? secrets.ALPCA_PT_KEYID : secrets.ALPCA_KEYID;
+  var secret_key = (isPaper) ? secrets.ALPCA_PT_SECRETKEY : secrets.ALPCA_SECRETKEY;
+  alpaca = new Alpaca({
+      keyId: key_id,
+      secretKey: secret_key,
+      paper: isPaper
+  }); 
+}
 
-  // Initialize relevant vars
+module.exports.execute = async () => {
 
-  // Initialize a Queue 45 long
-  var bars = new Array(45).fill(0);
+  // Initialize client and relevant vars
+  await init(config.environment == "Paper");
+  var wsClient = alpaca.websocket;
 
-  // Setup WebSocket
-  const client = alpacaClient.websocket;
-  client.connect();
+  // Start WebSocket
+  wsClient.connect();
 
-
-  client.onConnect(function() {
-    console.log("WebSocket connected - Starting Trading Session");
-
+  wsClient.onConnect(function() {
+    console.log(`WebSocket connected - Starting ${config.environment} Trading Session`);
+  
     // Subscribe to appropriate channels
-    client.subscribe(['trade_updates', 'AM.AAPL']);
-
+    wsClient.subscribe(['trade_updates', 'AM.AAPL']);
+  
   });
-
-  client.onStockAggSec(function(subject, data) {
-
+  
+  wsClient.onStockAggSec(function(subject, data) {
+  
   });
-
-  client.onStockAggMin(async function(subject, data) {
-    
-    // Format incoming data?
-    var incomingData = JSON.parse(data)[0];
-    
-    console.log("New web socket data: ", incomingData);
-
-    console.log("");
-    var currDate = new Date();
-    console.log("Current Time: ", currDate.getHours() + ":" + currDate.getMinutes());
-    console.log("");
-
-    // Check first if there is any dead time elapsed between incoming data and last received, longer than a minute. 
-    // If so, hydrate the queue with last received data for the duration of dead time.
-    // If not, just push on the new minute's data and pop off the oldest bar's data.
-    bars = incrementBars(bars, incomingData);
-
-    console.log("Current Bars: ", bars);
-
-    // Format data for 1min, 3min, 5min etc. time aggregates
-    var oneMinAgg = bars.slice(0, 9);
-    var threeMinAgg = _.filter(bars, function(item) { return (_.indexOf(bars, item) + 1) % 3 == 0; });
-    var fiveMinAgg = _.filter(bars, function(item) { return (_.indexOf(bars, item) + 1) % 5 == 0; });
-
-    // check for 3 bar play
-    var threeBPOneMin = is3BarPlay(oneMinAgg);
-    var threeBPThreeMin = is3BarPlay(threeMinAgg);
-    var threeBPFiveMin = is3BarPlay(fiveMinAgg);
-
-    // check for 4 bar play
-
-    // act appropriately according to above checks
-    if(threeBPOneMin){
-      console.log("THREE BAR PLAY!");
-      // Buy Stock
-      
-      // Save plot of buy entry scenario as an image
-      const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(oneMinAgg)}`);
-
-      // Upload to s3
-      await uploadImage();
-      client.disconnect();
-    }
-    else if(threeBPThreeMin){
-      console.log("THREE BAR PLAY!");
-      // Buy Stock
-      
-      // Save plot of buy entry scenario as an image
-      const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(threeMinAgg)}`);
-
-      // Upload to s3
-      await uploadImage();
-      client.disconnect();
-    }
-    else if(threeBPFiveMin){
-      console.log("THREE BAR PLAY!");
-      // Buy Stock
-      
-      // Save plot of buy entry scenario as an image
-      const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(fiveMinAgg)}`);
-
-      // Upload to s3
-      await uploadImage();
-      client.disconnect();
-    }
-    else{
-      // nothing
-    }
-  });
-
-  client.onOrderUpdate(data => {
+  
+  wsClient.onStockAggMin(minAggCB);
+  
+  wsClient.onOrderUpdate(data => {
     console.log(`Order updates: ${JSON.stringify(data)}`);
   });
-
-  client.onDisconnect(() => {
+  
+  wsClient.onDisconnect(() => {
     console.log("WebSocket disconnected - Finished Trading Session");
   });
+
 }
+
+var minAggCB = async (subject, data) => {
+  // Format incoming data?
+  var incomingData = JSON.parse(data)[0];
+    
+  console.log("New web socket data: ", incomingData);
+
+  console.log("");
+  var currDate = new Date();
+  console.log("Current Time: ", currDate.getHours() + ":" + currDate.getMinutes());
+  console.log("");
+
+  // Check first if there is any dead time elapsed between incoming data and last received, longer than a minute. 
+  // If so, hydrate the queue with last received data for the duration of dead time.
+  // If not, just push on the new minute's data and pop off the oldest bar's data.
+  bars = incrementBars(bars, incomingData);
+
+  // Format data for 1min, 3min, 5min etc. time aggregates
+  var oneMinAgg = bars.slice(0, 8);
+  var threeMinAgg = bars.filter(function(val, index){ return (index % 3 == 0) && (index < 3*8); });
+  var fiveMinAgg = bars.filter(function(val, index){ return (index % 5 == 0) && (index < 5*8); });
+
+  // check for 3 bar play
+  var threeBPOneMin = is3BarPlay(oneMinAgg);
+  var threeBPThreeMin = is3BarPlay(threeMinAgg);
+  var threeBPFiveMin = is3BarPlay(fiveMinAgg);
+
+  // check for 4 bar play
+
+  // act appropriately according to above checks
+  if(threeBPOneMin){
+    console.log("THREE BAR PLAY!");
+    // Buy Stock
+    
+    // Save plot of buy entry scenario as an image
+    var agg = formatForPlot(oneMinAgg);
+    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${agg}`);
+
+    // Upload to s3
+    var date = new Date(agg[0] * MILLI);
+    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
+    client.disconnect();
+  }
+  else if(threeBPThreeMin){
+    console.log("THREE BAR PLAY!");
+    // Buy Stock
+    
+    // Save plot of buy entry scenario as an image
+    var agg = formatForPlot(threeMinAgg);
+    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(agg)}`);
+
+    // Upload to s3
+    var date = new Date(agg[0] * MILLI);
+    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
+    client.disconnect();
+  }
+  else if(threeBPFiveMin){
+    console.log("THREE BAR PLAY!");
+    // Buy Stock
+    
+    // Save plot of buy entry scenario as an image
+    var agg = formatForPlot(fiveMinAgg);
+    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(agg)}`);
+
+    // Upload to s3
+    var date = new Date(agg[0] * MILLI);
+    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
+    client.disconnect();
+  }
+  else{
+    // nothing
+  }
+}
+module.exports.minAggCB = minAggCB;
 
 var is3BarPlay = (data) => {
 
@@ -117,18 +140,18 @@ var is3BarPlay = (data) => {
   }
   else{
     var prevBarsTotal = 0;
-    var prevBars = data.slice(0, 6);
+    var prevBars = data.slice(3);
     for (var bar of prevBars) {
       prevBarsTotal = prevBarsTotal + Math.abs(bar["o"] - bar["c"]);
     }
     var avgPrevBars = prevBarsTotal / 5;
-    var ignitingBar = data[data.length-3];
-    var restingBar = data[data.length-2];
-    var entryBar = data[data.length-1];
+    var ignitingBar = data[2];
+    var restingBar = data[1];
+    var entryBar = data[0];
 
     // Potential igniting bar
     console.log("Data: ", data); 
-    console.log("igniting bar: ", ignitingBar);
+    //console.log("igniting bar: ", ignitingBar);
     var igBarLength = ignitingBar["c"] - ignitingBar["o"];
 
     // Is potential igniting bar trending up
@@ -165,8 +188,6 @@ var is3BarPlay = (data) => {
   }
 }
 
-module.exports.is3BarPlay = is3BarPlay;
-
 // var is4BarPlay = async(bars) => {
 
 // }
@@ -182,16 +203,14 @@ var incrementBars = (currBars, newBar) => {
   return currBars;
 }
 
-module.exports.incrementBars = incrementBars;
-
 var formatForPlot = (agg) => {
   var dataTuple = [];
-  for (var bar of agg){
-    package.push(bar["t"]);
-    package.push(bar["o"]);
-    package.push(bar["h"]);
-    package.push(bar["l"]);
-    package.push(bar["c"]);
+  for (var bar = agg.length - 1; bar >= 0; bar--){
+    dataTuple.push(agg[bar]["t"]);
+    dataTuple.push(agg[bar]["o"]);
+    dataTuple.push(agg[bar]["h"]);
+    dataTuple.push(agg[bar]["l"]);
+    dataTuple.push(agg[bar]["c"]);
   }
   return dataTuple;
 }
@@ -203,14 +222,13 @@ var checkBars = (bars) => {
   return true;
 }
 
-var uploadImage = async () => {
-  var now = new Date();
-  var fileName = String(now.getMonth() + 1) + String(now.getDate()) + String(now.getFullYear()) + "_plot.pdf";
-  var file = fs.readFileSync(fileName);
+var uploadImage = async (date) => {
+  var fileName = date + "_plot.pdf";
+  var file = fs.readFileSync('/usr/src/bot/strategies/TBP/'+fileName);
   var params = {
       Body: file,
       Bucket: "tradingartifacts",
-      Key: `TBP/${fileName}.pdf`
+      Key: `TBP/${fileName}`
   }
   await S3.putObject(params).promise();
 }
