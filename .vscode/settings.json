@@ -1,0 +1,4 @@
+{
+    "python.pythonPath": "/Library/Frameworks/Python.framework/Versions/2.7/bin/python",
+    "python.linting.pylintEnabled": true
+}
