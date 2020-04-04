@@ -92,10 +92,12 @@ var minAggCB = async (subject, data) => {
     // Buy Stock
     
     // Save plot of buy entry scenario as an image
-    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(oneMinAgg)}`);
+    var agg = formatForPlot(oneMinAgg);
+    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${agg}`);
 
     // Upload to s3
-    await uploadImage();
+    var date = new Date(agg[0] * MILLI);
+    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
     client.disconnect();
   }
   else if(threeBPThreeMin){
@@ -103,10 +105,12 @@ var minAggCB = async (subject, data) => {
     // Buy Stock
     
     // Save plot of buy entry scenario as an image
-    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(threeMinAgg)}`);
+    var agg = formatForPlot(threeMinAgg);
+    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(agg)}`);
 
     // Upload to s3
-    await uploadImage();
+    var date = new Date(agg[0] * MILLI);
+    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
     client.disconnect();
   }
   else if(threeBPFiveMin){
@@ -114,10 +118,12 @@ var minAggCB = async (subject, data) => {
     // Buy Stock
     
     // Save plot of buy entry scenario as an image
-    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(fiveMinAgg)}`);
+    var agg = formatForPlot(fiveMinAgg);
+    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(agg)}`);
 
     // Upload to s3
-    await uploadImage();
+    var date = new Date(agg[0] * MILLI);
+    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
     client.disconnect();
   }
   else{
@@ -216,10 +222,9 @@ var checkBars = (bars) => {
   return true;
 }
 
-var uploadImage = async () => {
-  var now = new Date();
-  var fileName = String(now.getMonth() + 1) + String(now.getDate()) + String(now.getFullYear()) + "_plot.pdf";
-  var file = fs.readFileSync('usr/src/bot/strategies/TBP/'+fileName);
+var uploadImage = async (date) => {
+  var fileName = date + "_plot.pdf";
+  var file = fs.readFileSync('/usr/src/bot/strategies/TBP/'+fileName);
   var params = {
       Body: file,
       Bucket: "tradingartifacts",
