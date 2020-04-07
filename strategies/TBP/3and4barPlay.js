@@ -62,12 +62,12 @@ var minAggCB = async (subject, data) => {
   // Format incoming data?
   var incomingData = JSON.parse(data)[0];
     
-  console.log("New web socket data: ", incomingData);
+  //console.log("New web socket data: ", incomingData);
 
-  console.log("");
-  var currDate = new Date();
-  console.log("Current Time: ", currDate.getHours() + ":" + currDate.getMinutes());
-  console.log("");
+  //console.log("");
+  //var currDate = new Date();
+  //console.log("Current Time: ", currDate.getHours() + ":" + currDate.getMinutes());
+  //console.log("");
 
   // Check first if there is any dead time elapsed between incoming data and last received, longer than a minute. 
   // If so, hydrate the queue with last received data for the duration of dead time.
@@ -150,7 +150,7 @@ var is3BarPlay = (data) => {
     var entryBar = data[0];
 
     // Potential igniting bar
-    console.log("Data: ", data); 
+    //console.log("Data: ", data); 
     //console.log("igniting bar: ", ignitingBar);
     var igBarLength = ignitingBar["c"] - ignitingBar["o"];
 
@@ -195,7 +195,7 @@ var is3BarPlay = (data) => {
 var incrementBars = (currBars, newBar) => {
   var millisSinceLastData = newBar["s"] - currBars[0]["e"];
   var minutesSinceLastData = (millisSinceLastData > 60 * MILLI) ? millisSinceLastData / (60 * MILLI) : 1;
-  console.log("minutes since last data: ", minutesSinceLastData);
+  //console.log("minutes since last data: ", minutesSinceLastData);
   for (i = 0; i < minutesSinceLastData; i++){
     currBars.unshift(newBar);
     currBars.pop();
