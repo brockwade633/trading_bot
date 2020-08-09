@@ -1,5 +1,5 @@
 // Trading Configuration 
 
 module.exports = {
-    environment: process.env.trade_env || "Paper",
+    environment: process.env.Environment || "paper",
 }
