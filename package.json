@@ -4,19 +4,14 @@
   "description": "Automated algorithmic trading bot",
   "main": "main.js",
   "scripts": {
-    "": "",
+    "3and4barPlayTests": "jest ./strategies/TBP/src --env=node --colors --coverage",
     "cleanPreviousImage": "node -e 'require(\"./utils/ecr_handler.js\").cleanPrevImage()'",
     "fetchECRAuthToken": "$(aws ecr get-login --no-include-email --region us-west-2)",
     "buildImage": "docker build -t tradingcluster:tbp -f ./strategies/TBP/Dockerfile .",
-    "tagImage": "docker tag tradingcluster:tbp 503921593645.dkr.ecr.us-west-2.amazonaws.com/tradingcluster:tbp",
-    "pushImage": "docker push 503921593645.dkr.ecr.us-west-2.amazonaws.com/tradingcluster:tbp",
-    "buildTagPushImage": "npm run fetchECRAuthToken && npm run buildImage && npm run tagImage && npm run pushImage",
     "cleanPreviousStack": "node -e 'require(\"./utils/cfn_handler.js\").cleanPrevStack()'",
-    "deployTBPService": "aws cloudformation deploy --template-file ./strategies/TBP/tbp_service_cfn.yaml --stack-name TBP --capabilities CAPABILITY_IAM --region us-west-2",
     "startLocalWS": "node -e 'require(\"./utils/localDev.js\").startWS()'",
     "testMinuteAggs": "node -e 'require(\"./utils/wsClient\").connect()'",
-    "tradeTBPPaper": "export trade_env=Paper && node -e 'require(\"./strategies/TBP/3and4barPlay.js\").execute()'",
-    "tradeTBPLive": "export trade_env=Live && node -e 'require(\"./strategies/TBP/3and4barPlay.js\").execute()'",
+    "tradeTBP": "node -e 'require(\"./strategies/TBP/3and4barPlay.js\").execute()'",
     "testOutBoundConnect": "curl https://www.google.com && echo this is a test message"
   },
   "keywords": [
@@ -39,6 +34,11 @@
     "request-promise-native": "^1.0.7"
   },
   "devDependencies": {
+    "handlebars": "^4.5.3",
+    "jest": "^22.0.6",
     "ws": "^7.2.3"
+  },
+  "jest": {
+    "testEnvironment": "node"
   }
 }
