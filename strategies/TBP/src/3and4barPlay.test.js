@@ -2,23 +2,23 @@ const implementation = require('./3and4barPlay');
 
 describe("3and4barPlay Unit Tests", () => {
     it('init', async () => {
-        expect(true).toBe(true);
+        // ToDo: Mock secrets manager and test that client and bars have been hydrated
     });
 
-    it('processMinAggs', async () => {
-        expect(true).toBe(true);
+    it.skip('processMinAggs', async () => {
+        // This is tested by WS for now
     });
 
     it('incrementBars', async () => {
-        expect(true).toBe(true);
+        // ToDo
     });
 
     it('is3BarPlay', async () => {
-        expect(true).toBe(true);
+        // ToDo
     });
 
     it('is4BarPlay', async () => {
-        expect(true).toBe(true);
+        // ToDo
     });
 
     it('checkBars', async () => {
