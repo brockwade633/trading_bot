@@ -19,7 +19,6 @@ Parameters:
     Description: Name for the service
   ImageUrl:
     Type: String
-    Default: 503921593645.dkr.ecr.us-west-2.amazonaws.com/tradingcluster:tbp
     Description: The url of the docker image that contains trading code
   ContainerCpu:
     Type: String
