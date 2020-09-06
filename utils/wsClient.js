@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-var parseAggMinData = require('../strategies/TBP/3and4barPlay').minAggCB;
+var parseAggMinData = require('../strategies/TBP/src/3and4barPlay').processMinAggs;
 
 // subscribe to local web socket
 module.exports.connect = () => {

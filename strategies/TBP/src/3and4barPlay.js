@@ -1,28 +1,27 @@
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-var _ = require('lodash');
-const MILLI = 1000;
+// Deps
 var AWS = require('aws-sdk');
-var S3 = new AWS.S3({apiVersion: '2017-10-17'});
 AWS.config.update({region: 'us-east-1'});
+var S3 = new AWS.S3({apiVersion: '2017-10-17'});
 var secretsManager = new AWS.SecretsManager({apiVersion: '2017-10-17'});
 const Alpaca = require('@alpacahq/alpaca-trade-api');
-const config = require('../../utils/alpacaConfig');
-var alpaca;
-
-// Initialize a Queue 36 long
-var bars = new Array(36).fill(0);
+var _ = require('lodash');
+// Files & globals
+const config = require('../../../utils/alpacaConfig');
+const MILLI = 1000;
+let alpaca;
+let bars;
 
 var init = async (isPaper) => {
-  var secretData = await secretsManager.getSecretValue({SecretId: "AlpacaAPIKeys"}).promise(); 
-  var secrets = JSON.parse(secretData.SecretString);
-  var key_id = (isPaper) ? secrets.ALPCA_PT_KEYID : secrets.ALPCA_KEYID;
-  var secret_key = (isPaper) ? secrets.ALPCA_PT_SECRETKEY : secrets.ALPCA_SECRETKEY;
+  const secretData = await secretsManager.getSecretValue({SecretId: "AlpacaAPIKeys"}).promise(); 
+  const secrets = JSON.parse(secretData.SecretString);
+  const key_id = (isPaper) ? secrets.ALPCA_PT_KEYID : secrets.ALPCA_KEYID;
+  const secret_key = (isPaper) ? secrets.ALPCA_PT_SECRETKEY : secrets.ALPCA_SECRETKEY;
   alpaca = new Alpaca({
       keyId: key_id,
       secretKey: secret_key,
       paper: isPaper
   }); 
+  bars = new Array(36).fill(0);
 }
 
 module.exports.execute = async () => {
@@ -42,11 +41,7 @@ module.exports.execute = async () => {
   
   });
   
-  wsClient.onStockAggSec(function(subject, data) {
-  
-  });
-  
-  wsClient.onStockAggMin(minAggCB);
+  wsClient.onStockAggMin(processMinAggs);
   
   wsClient.onOrderUpdate(data => {
     console.log(`Order updates: ${JSON.stringify(data)}`);
@@ -58,16 +53,9 @@ module.exports.execute = async () => {
 
 }
 
-var minAggCB = async (subject, data) => {
-  // Format incoming data?
+var processMinAggs = async (subject, data) => {
+  // Parse incoming data
   var incomingData = JSON.parse(data)[0];
-    
-  //console.log("New web socket data: ", incomingData);
-
-  //console.log("");
-  //var currDate = new Date();
-  //console.log("Current Time: ", currDate.getHours() + ":" + currDate.getMinutes());
-  //console.log("");
 
   // Check first if there is any dead time elapsed between incoming data and last received, longer than a minute. 
   // If so, hydrate the queue with last received data for the duration of dead time.
@@ -84,53 +72,26 @@ var minAggCB = async (subject, data) => {
   var threeBPThreeMin = is3BarPlay(threeMinAgg);
   var threeBPFiveMin = is3BarPlay(fiveMinAgg);
 
-  // check for 4 bar play
+  // ToDo: Additionally check for 4 bar play
 
   // act appropriately according to above checks
   if(threeBPOneMin){
-    console.log("THREE BAR PLAY!");
-    // Buy Stock
-    
-    // Save plot of buy entry scenario as an image
-    var agg = formatForPlot(oneMinAgg);
-    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${agg}`);
-
-    // Upload to s3
-    var date = new Date(agg[0] * MILLI);
-    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
+    console.log("THREE BAR PLAY! (1 min aggregate)");
+    // Buy Stock here 
     client.disconnect();
   }
   else if(threeBPThreeMin){
-    console.log("THREE BAR PLAY!");
-    // Buy Stock
-    
-    // Save plot of buy entry scenario as an image
-    var agg = formatForPlot(threeMinAgg);
-    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(agg)}`);
-
-    // Upload to s3
-    var date = new Date(agg[0] * MILLI);
-    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
+    console.log("THREE BAR PLAY! (3 min aggregate)");
+    // Buy Stock here
     client.disconnect();
   }
   else if(threeBPFiveMin){
-    console.log("THREE BAR PLAY!");
-    // Buy Stock
-    
-    // Save plot of buy entry scenario as an image
-    var agg = formatForPlot(fiveMinAgg);
-    const { stdout, stderr } = await exec(`python /usr/src/bot/utils/plot.py ${formatForPlot(agg)}`);
-
-    // Upload to s3
-    var date = new Date(agg[0] * MILLI);
-    await uploadImage(`${date.getMonth()+1}${date.getDate()}${date.getFullYear()}`);
+    console.log("THREE BAR PLAY! (5 min aggregate)");
+    // Buy Stock here 
     client.disconnect();
   }
-  else{
-    // nothing
-  }
 }
-module.exports.minAggCB = minAggCB;
+module.exports.processMinAggs = processMinAggs;
 
 var is3BarPlay = (data) => {
 
@@ -188,9 +149,9 @@ var is3BarPlay = (data) => {
   }
 }
 
-// var is4BarPlay = async(bars) => {
-
-// }
+var is4BarPlay = async(data) => {
+  // ToDo: implememt 4 bar play validations
+}
 
 var incrementBars = (currBars, newBar) => {
   var millisSinceLastData = newBar["s"] - currBars[0]["e"];
@@ -203,32 +164,10 @@ var incrementBars = (currBars, newBar) => {
   return currBars;
 }
 
-var formatForPlot = (agg) => {
-  var dataTuple = [];
-  for (var bar = agg.length - 1; bar >= 0; bar--){
-    dataTuple.push(agg[bar]["t"]);
-    dataTuple.push(agg[bar]["o"]);
-    dataTuple.push(agg[bar]["h"]);
-    dataTuple.push(agg[bar]["l"]);
-    dataTuple.push(agg[bar]["c"]);
-  }
-  return dataTuple;
-}
-
 var checkBars = (bars) => {
   for(var bar of bars){
     if(typeof bar != 'object') return false;
   }
   return true;
 }
-
-var uploadImage = async (date) => {
-  var fileName = date + "_plot.pdf";
-  var file = fs.readFileSync('/usr/src/bot/strategies/TBP/'+fileName);
-  var params = {
-      Body: file,
-      Bucket: "tradingartifacts",
-      Key: `TBP/${fileName}`
-  }
-  await S3.putObject(params).promise();
-}
+module.exports.checkBars = checkBars;

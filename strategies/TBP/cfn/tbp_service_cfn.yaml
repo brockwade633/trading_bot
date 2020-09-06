@@ -2,6 +2,9 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Deploy a service to the Fargate trading cluster that runs the Three (and Four) Bar Play Strategy
 Parameters:
+  Environment:
+    Type: String
+    Description: Environment (paper || live) that the service stack is associated with
   StackName:
     Type: String
     Default: TBP
@@ -9,14 +12,13 @@ Parameters:
   InfraStackName:
     Type: String
     Default: TCInfra
-    Description: The name of the parent Fargate infra stack.
+    Description: The name of the parent Fargate infra stack
   StrategyName:
     Type: String
     Default: threeBarPlay
     Description: Name for the service
   ImageUrl:
     Type: String
-    Default: ***REMOVED***
     Description: The url of the docker image that contains trading code
   ContainerCpu:
     Type: String
@@ -33,7 +35,7 @@ Resources:
   CloudWatchLogsGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Ref 'StrategyName'
+      LogGroupName: !Ref StrategyName
       RetentionInDays: 7
 
   # The task definition. Describes the containers within and their resource requirements.
@@ -41,9 +43,9 @@ Resources:
     Type: AWS::ECS::TaskDefinition
     DependsOn: CloudWatchLogsGroup
     Properties:
-      Family: !Ref 'StrategyName'
-      Cpu: !Ref 'ContainerCpu'
-      Memory: !Ref 'ContainerMemory'
+      Family: !Ref StrategyName
+      Cpu: !Ref ContainerCpu
+      Memory: !Ref ContainerMemory
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
@@ -65,7 +67,7 @@ Resources:
 
   # State machine that executes Task Definition
   StateMachine:
-    Type: 'AWS::StepFunctions::StateMachine'
+    Type: AWS::StepFunctions::StateMachine
     Properties:
       DefinitionString: !Sub
       - |
@@ -109,12 +111,12 @@ Resources:
         PrivateSubnet:
           Fn::ImportValue: 
             !Join [':', [!Ref 'InfraStackName', 'PrivateSubnet']]
-        TaskDefinition: !Ref 'TaskDefinition'
-      RoleArn: !GetAtt 'StateMachineRole.Arn'
-
+        TaskDefinition: !Ref TaskDefinition
+      RoleArn: !GetAtt StateMachineRole.Arn
+      
   # State Machine IAM Role
   StateMachineRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -160,18 +162,18 @@ Resources:
 
   # Rule that tells the State Machine when to execute on a cron schedule
   Rule:
-    Type: 'AWS::Events::Rule'
+    Type: AWS::Events::Rule
     Properties:
       ScheduleExpression: 'cron(30 13 ? * MON-FRI *)'
       State: ENABLED
       Targets:
       - Arn: !Ref StateMachine
         Id: statemachine
-        RoleArn: !GetAtt 'RuleRole.Arn'
+        RoleArn: !GetAtt RuleRole.Arn
 
   # Rule IAM Role
   RuleRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -190,26 +192,26 @@ Resources:
 Outputs:
   TaskDefinition:
     Description: The Fargate Cluster's Task Definition
-    Value: !Ref 'TaskDefinition'
+    Value: !Ref TaskDefinition
     Export:
       Name: !Sub ${StackName}:TaskDefinition
   StateMachine:
     Description: The State Machine that manages the Fargate Task
-    Value: !Ref 'StateMachine'
+    Value: !Ref StateMachine
     Export:
       Name: !Sub ${StackName}:StateMachine
   StateMachineRole:
     Description: The State Machine IAM Role 
-    Value: !Ref 'StateMachineRole'
+    Value: !Ref StateMachineRole
     Export:
       Name: !Sub ${StackName}:StateMachineRole
   Rule:
     Description: The Rule that dictates when State Machine tasks are executed
-    Value: !Ref 'Rule'
+    Value: !Ref Rule
     Export:
       Name: !Sub ${StackName}:Rule
   RuleRole:
     Description: The Rule IAM Role
-    Value: !Ref 'RuleRole'
+    Value: !Ref RuleRole
     Export:
       Name: !Sub ${StackName}:RuleRole
