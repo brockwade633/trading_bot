@@ -57,11 +57,11 @@ Resources:
           !Join [':', [!Ref 'InfraStackName', 'ECSTaskExecutionRole']]
       ContainerDefinitions:
         - Name: TESTCONTAINER
-          Image: !Ref 'ImageUrl'
+          Image: !Ref ImageUrl
           LogConfiguration:
             LogDriver: awslogs
             Options:
-              awslogs-group: !Ref 'StrategyName'
+              awslogs-group: !Ref StrategyName
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: awslogs-fargatecontainer
 
