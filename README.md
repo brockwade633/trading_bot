@@ -5,5 +5,6 @@ This repo contains automated trading bot code that searches for simple Three-Bar
 >Market data and trading operations are handled by [Alpaca - commission free stock trading API.](https://alpaca.markets/)
 
 # Next Steps
+- Target specific stocks in a watch-list
 - Implement buy - sell execution flow
 - Add new strategy nodes to the Fargate Cluster
