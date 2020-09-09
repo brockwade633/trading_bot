@@ -1,9 +1,9 @@
 # Three Bar Play Stock Trading Bot
 
-**Powered by AWS**
+**Powered by AWS** \
 ![AWS](./utils/AWSLogo.png "AWS Logo") 
 
-**and Alpaca** 
+**and Alpaca** \
 ![Alpaca](./utils/AlpacaSmall.png "Alpaca")
 
 ## Strategy 
