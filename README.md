@@ -10,12 +10,12 @@ This repo contains automated trading bot code that searches for simple Three-Bar
 ## Implementation Details 
 The bot subscribes to a web socket that provides by-the-minute stock price data, and those 1 minute snapshots are maintained in a queue. After each data snapshot is received, the data in the queue is evaluated with respect to 1, 3, and 5 minute time sequences to see if any Three Bar Play bar sequences are present. If so, we've found a trading opportunity.
 
-### AWS 
+--- 
 ![AWS](./utils/AWSLogo.png "AWS Logo") 
 
 The Three-Bar-Play bot code is encapsulated in a Docker container, and stored in AWS's Elastic Container Registry. An ECS task definition with a Fargate launch type is created that configures the container's resource information and enables the container to be run, starting up the bot. An AWS Step Function that operates on a cron schedule then invokes the Fargate task and executes the container each morning. Other infrastucture resources that support the trading stack such as subnets and route tables are described in the [infrastructure stack.](https://github.com/brockwade633/trading_infra)  
 
-### Alpaca 
+--- 
 ![Alpaca](./utils/AlpacaSmall.png "Alpaca")
 
 Subscribing to stock market data and handling the trading operations are supported by [Alpaca - commission free stock trading API.](https://alpaca.markets/) It is a fantastic platform with great API capabilities as well as market data, paper (fake) trading and much more.  
