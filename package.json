@@ -36,7 +36,7 @@
   "devDependencies": {
     "handlebars": "^4.5.3",
     "jest": "^22.0.6",
-    "ws": "^7.2.3"
+    "ws": "^7.4.6"
   },
   "jest": {
     "testEnvironment": "node"
